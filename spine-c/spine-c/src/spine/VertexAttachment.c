@@ -37,6 +37,18 @@ void _spVertexAttachment_deinit (spVertexAttachment* attachment) {
 	FREE(attachment->vertices);
 }
 
+void _spVertexAttachment_cloneFields (const spVertexAttachment* self, spVertexAttachment* target) {
+        const int boneCount = self->bonesCount;
+        target->bonesCount = boneCount;
+        MALLOC_COPY(target->bones, self->bones, int, boneCount);
+
+        const int vertexCount = self->verticesCount;
+        target->verticesCount = vertexCount;
+        MALLOC_COPY(target->vertices, self->vertices, float, vertexCount);
+
+        target->worldVerticesLength = self->worldVerticesLength;
+}
+
 void spVertexAttachment_computeWorldVertices (spVertexAttachment* self, spSlot* slot, float* worldVertices) {
 	spVertexAttachment_computeWorldVertices1(self, 0, self->worldVerticesLength, slot, worldVertices, 0);
 }

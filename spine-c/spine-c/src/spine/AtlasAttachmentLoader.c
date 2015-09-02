@@ -90,7 +90,7 @@ spAttachment* _spAtlasAttachmentLoader_createAttachment (spAttachmentLoader* loa
 
 spAtlasAttachmentLoader* spAtlasAttachmentLoader_create (spAtlas* atlas) {
 	spAtlasAttachmentLoader* self = NEW(spAtlasAttachmentLoader);
-	_spAttachmentLoader_init(SUPER(self), _spAttachmentLoader_deinit, _spAtlasAttachmentLoader_createAttachment, 0, 0);
+	_spAttachmentLoader_init(SUPER(self), _spAttachmentLoader_deinit, _spAtlasAttachmentLoader_createAttachment, 0, 0, 0);
 	self->atlas = atlas;
 	return self;
 }

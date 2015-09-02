@@ -45,13 +45,70 @@ void _spMeshAttachment_dispose (spAttachment* attachment) {
 	FREE(self);
 }
 
+spAttachment* _spMeshAttachment_clone (const spAttachment* attachment) {
+	const spMeshAttachment* const self = SUB_CAST(spMeshAttachment, attachment);
+	spMeshAttachment* const result = NEW(spMeshAttachment);
+	_spAttachment_init(SUPER(SUPER(result)), SUPER(SUPER(self))->name, SP_ATTACHMENT_MESH, _spMeshAttachment_dispose, _spMeshAttachment_clone);
+
+        result->rendererObject = self->rendererObject;
+        result->regionOffsetX = self->regionOffsetX;
+        result->regionOffsetY = self->regionOffsetY;
+        result->regionWidth = self->regionWidth;
+        result->regionHeight = self->regionHeight;
+        result->regionOriginalWidth = self->regionOriginalWidth;
+        result->regionOriginalHeight = self->regionOriginalHeight;
+        result->regionU = self->regionU;
+        result->regionV = self->regionV;
+        result->regionU2 = self->regionU2;
+        result->regionV2 = self->regionV2;
+        result->regionRotate = self->regionRotate;
+
+        MALLOC_STR(result->path, self->path);
+
+        const int vertexCount = SUPER(self)->verticesCount;
+        MALLOC_COPY(result->uvs, self->uvs, float, vertexCount);
+
+        result->r = self->r;
+        result->g = self->g;
+        result->b = self->b;
+        result->a = self->a;
+
+        result->inheritDeform = self->inheritDeform;
+        result->width = self->width;
+        result->height = self->height;
+
+        if (self->parentMesh) {
+            spMeshAttachment_setParentMesh(result, self->parentMesh);
+        } else {
+            _spVertexAttachment_cloneFields(SUPER(self), SUPER(result));
+
+            MALLOC_COPY(result->regionUVs, self->uvs, float, vertexCount);
+
+            const int triangleCount = self->trianglesCount;
+            result->trianglesCount = triangleCount;
+            MALLOC_COPY(result->triangles, self->triangles, unsigned short, triangleCount);
+
+            result->hullLength = self->hullLength;
+        
+            const int edgeCount = self->edgesCount;
+            result->edgesCount = edgeCount;
+            MALLOC_COPY(result->edges, self->edges, int, edgeCount);
+        }        
+
+        if (attachment->attachmentLoader) {
+            spAttachmentLoader_configureClonedAttachment (attachment->attachmentLoader, SUPER_CAST(spAttachment, result));
+        }
+        
+        return SUPER_CAST(spAttachment, result);
+}
+
 spMeshAttachment* spMeshAttachment_create (const char* name) {
 	spMeshAttachment* self = NEW(spMeshAttachment);
 	self->r = 1;
 	self->g = 1;
 	self->b = 1;
 	self->a = 1;
-	_spAttachment_init(SUPER(SUPER(self)), name, SP_ATTACHMENT_MESH, _spMeshAttachment_dispose);
+	_spAttachment_init(SUPER(SUPER(self)), name, SP_ATTACHMENT_MESH, _spMeshAttachment_dispose, _spMeshAttachment_clone);
 	return self;
 }
 

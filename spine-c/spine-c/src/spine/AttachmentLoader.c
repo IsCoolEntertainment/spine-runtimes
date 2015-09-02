@@ -36,6 +36,7 @@ typedef struct _spAttachmentLoaderVtable {
 	spAttachment* (*createAttachment) (spAttachmentLoader* self, spSkin* skin, spAttachmentType type, const char* name,
 			const char* path);
 	void (*configureAttachment) (spAttachmentLoader* self, spAttachment*);
+	void (*configureClonedAttachment) (spAttachmentLoader* self, spAttachment*);
 	void (*disposeAttachment) (spAttachmentLoader* self, spAttachment*);
 	void (*dispose) (spAttachmentLoader* self);
 } _spAttachmentLoaderVtable;
@@ -45,12 +46,14 @@ void _spAttachmentLoader_init (spAttachmentLoader* self,
 	spAttachment* (*createAttachment) (spAttachmentLoader* self, spSkin* skin, spAttachmentType type, const char* name,
 		const char* path),
 	void (*configureAttachment) (spAttachmentLoader* self, spAttachment*),
+	void (*configureClonedAttachment) (spAttachmentLoader* self, spAttachment*),
 	void (*disposeAttachment) (spAttachmentLoader* self, spAttachment*)
 ) {
 	CONST_CAST(_spAttachmentLoaderVtable*, self->vtable) = NEW(_spAttachmentLoaderVtable);
 	VTABLE(spAttachmentLoader, self)->dispose = dispose;
 	VTABLE(spAttachmentLoader, self)->createAttachment = createAttachment;
 	VTABLE(spAttachmentLoader, self)->configureAttachment = configureAttachment;
+	VTABLE(spAttachmentLoader, self)->configureClonedAttachment = configureClonedAttachment;
 	VTABLE(spAttachmentLoader, self)->disposeAttachment = disposeAttachment;
 }
 
@@ -77,6 +80,11 @@ spAttachment* spAttachmentLoader_createAttachment (spAttachmentLoader* self, spS
 void spAttachmentLoader_configureAttachment (spAttachmentLoader* self, spAttachment* attachment) {
 	if (!VTABLE(spAttachmentLoader, self)->configureAttachment) return;
 	VTABLE(spAttachmentLoader, self)->configureAttachment(self, attachment);
+}
+
+void spAttachmentLoader_configureClonedAttachment (spAttachmentLoader* self, spAttachment* attachment) {
+	if (!VTABLE(spAttachmentLoader, self)->configureClonedAttachment) return;
+	VTABLE(spAttachmentLoader, self)->configureClonedAttachment(self, attachment);
 }
 
 void spAttachmentLoader_disposeAttachment (spAttachmentLoader* self, spAttachment* attachment) {

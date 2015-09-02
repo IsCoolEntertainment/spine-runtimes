@@ -60,6 +60,7 @@ spAttachment* spAttachmentLoader_createAttachment (spAttachmentLoader* self, spS
 		const char* path);
 /* Called after the attachment has been fully configured. */
 void spAttachmentLoader_configureAttachment (spAttachmentLoader* self, spAttachment* attachment);
+void spAttachmentLoader_configureClonedAttachment (spAttachmentLoader* self, spAttachment* attachment);
 /* Called just before the attachment is disposed. This can release allocations made in spAttachmentLoader_configureAttachment. */
 void spAttachmentLoader_disposeAttachment (spAttachmentLoader* self, spAttachment* attachment);
 
@@ -68,6 +69,7 @@ typedef spAttachmentLoader AttachmentLoader;
 #define AttachmentLoader_dispose(...) spAttachmentLoader_dispose(__VA_ARGS__)
 #define AttachmentLoader_createAttachment(...) spAttachmentLoader_createAttachment(__VA_ARGS__)
 #define AttachmentLoader_configureAttachment(...) spAttachmentLoader_configureAttachment(__VA_ARGS__)
+#define AttachmentLoader_configureClonedAttachment(...) spAttachmentLoader_configureClonedAttachment(__VA_ARGS__)
 #define AttachmentLoader_disposeAttachment(...) spAttachmentLoader_disposeAttachment(__VA_ARGS__)
 #endif
 

@@ -87,6 +87,8 @@
 /* Allocates a new char[], assigns it to TO, and copies FROM to it. Can be used on const types. */
 #define MALLOC_STR(TO,FROM) strcpy(CONST_CAST(char*, TO) = (char*)MALLOC(char, strlen(FROM) + 1), FROM)
 
+#define MALLOC_COPY(TO,FROM,TYPE,COUNT) memcpy(TO = MALLOC(TYPE, COUNT), FROM, sizeof(TYPE) * (COUNT))
+
 #define PI 3.1415926535897932385f
 #define PI2 (PI * 2)
 #define DEG_RAD (PI / 180)
@@ -234,6 +236,7 @@ void _spAttachmentLoader_init (spAttachmentLoader* self,
 	spAttachment* (*createAttachment) (spAttachmentLoader* self, spSkin* skin, spAttachmentType type, const char* name,
 		const char* path),
 	void (*configureAttachment) (spAttachmentLoader* self, spAttachment*),
+	void (*configureClonedAttachment) (spAttachmentLoader* self, spAttachment*),
 	void (*disposeAttachment) (spAttachmentLoader* self, spAttachment*)
 );
 void _spAttachmentLoader_deinit (spAttachmentLoader* self);
@@ -251,9 +254,11 @@ void _spAttachmentLoader_setUnknownTypeError (spAttachmentLoader* self, spAttach
 /**/
 
 void _spAttachment_init (spAttachment* self, const char* name, spAttachmentType type,
-void (*dispose) (spAttachment* self));
+void (*dispose) (spAttachment* self),
+spAttachment* (*clone) (const spAttachment* self));
 void _spAttachment_deinit (spAttachment* self);
 void _spVertexAttachment_deinit (spVertexAttachment* self);
+void _spVertexAttachment_cloneFields (const spVertexAttachment* self, spVertexAttachment* target);
 
 #ifdef SPINE_SHORT_NAMES
 #define _Attachment_init(...) _spAttachment_init(__VA_ARGS__)

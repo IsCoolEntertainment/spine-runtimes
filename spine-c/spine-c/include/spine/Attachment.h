@@ -61,6 +61,7 @@ typedef struct spAttachment {
 } spAttachment;
 
 void spAttachment_dispose (spAttachment* self);
+spAttachment* spAttachment_clone (const spAttachment* self);
 
 #ifdef SPINE_SHORT_NAMES
 typedef spAttachmentType AttachmentType;
@@ -70,6 +71,7 @@ typedef spAttachmentType AttachmentType;
 #define ATTACHMENT_LINKED_MESH SP_ATTACHMENT_LINKED_MESH
 typedef spAttachment Attachment;
 #define Attachment_dispose(...) spAttachment_dispose(__VA_ARGS__)
+#define Attachment_clone(...) spAttachment_clone(__VA_ARGS__)
 #endif
 
 #ifdef __cplusplus

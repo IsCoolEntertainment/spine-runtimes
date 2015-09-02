@@ -40,9 +40,26 @@ void _spPathAttachment_dispose (spAttachment* attachment) {
 	FREE(self);
 }
 
+spAttachment* _spPathAttachment_clone (const spAttachment* attachment) {
+	const spPathAttachment* const self = SUB_CAST(spPathAttachment, attachment);
+	spPathAttachment* const result = NEW(spPathAttachment);
+	_spAttachment_init(SUPER(SUPER(result)), SUPER(SUPER(self))->name, SP_ATTACHMENT_PATH, _spPathAttachment_dispose, _spPathAttachment_clone);
+
+        _spVertexAttachment_cloneFields(SUPER(self), SUPER(result));
+
+        const int lengthsLength = self->lengthsLength;
+        result->lengthsLength = lengthsLength;
+        MALLOC_COPY(result->lengths, self->lengths, float, lengthsLength);
+
+        result->closed = self->closed;
+        result->constantSpeed = self->constantSpeed;
+
+        return SUPER_CAST(spAttachment, result);
+}
+
 spPathAttachment* spPathAttachment_create (const char* name) {
 	spPathAttachment* self = NEW(spPathAttachment);
-	_spAttachment_init(SUPER(SUPER(self)), name, SP_ATTACHMENT_PATH, _spPathAttachment_dispose);
+	_spAttachment_init(SUPER(SUPER(self)), name, SP_ATTACHMENT_PATH, _spPathAttachment_dispose, _spPathAttachment_clone);
 	return self;
 }
 

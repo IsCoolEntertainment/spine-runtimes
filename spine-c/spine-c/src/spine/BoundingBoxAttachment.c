@@ -39,9 +39,19 @@ void _spBoundingBoxAttachment_dispose (spAttachment* attachment) {
 	FREE(self);
 }
 
+spAttachment* _spBoundingBoxAttachment_clone (const spAttachment* attachment) {
+	const spBoundingBoxAttachment* const self = SUB_CAST(spBoundingBoxAttachment, attachment);
+	spBoundingBoxAttachment* const result = NEW(spBoundingBoxAttachment);
+	_spAttachment_init(SUPER(SUPER(result)), SUPER(SUPER(self))->name, SP_ATTACHMENT_BOUNDING_BOX, _spBoundingBoxAttachment_dispose, _spBoundingBoxAttachment_clone);
+
+        _spVertexAttachment_cloneFields(SUPER(self), SUPER(result));
+
+        return SUPER_CAST(spAttachment, result);
+}
+
 spBoundingBoxAttachment* spBoundingBoxAttachment_create (const char* name) {
 	spBoundingBoxAttachment* self = NEW(spBoundingBoxAttachment);
-	_spAttachment_init(SUPER(SUPER(self)), name, SP_ATTACHMENT_BOUNDING_BOX, _spBoundingBoxAttachment_dispose);
+	_spAttachment_init(SUPER(SUPER(self)), name, SP_ATTACHMENT_BOUNDING_BOX, _spBoundingBoxAttachment_dispose, _spBoundingBoxAttachment_clone);
 	return self;
 }
 
