@@ -62,9 +62,14 @@ SkeletonRenderer* SkeletonRenderer::createWithFile (const std::string& skeletonD
 void SkeletonRenderer::initialize () {
 	_worldVertices = new float[1000]; // Max number of vertices per mesh.
 
+#if CC_ENABLE_PREMULTIPLIED_ALPHA == 0
+	_blendFunc = BlendFunc::ALPHA_NON_PREMULTIPLIED;
+	setOpacityModifyRGB(false);
+#else
 	_blendFunc = BlendFunc::ALPHA_PREMULTIPLIED;
 	setOpacityModifyRGB(true);
-
+#endif
+        
 	setGLProgramState(GLProgramState::getOrCreateWithGLProgramName(GLProgram::SHADER_NAME_POSITION_TEXTURE_COLOR_NO_MVP));
 }
 
@@ -216,7 +221,7 @@ void SkeletonRenderer::draw (Renderer* renderer, const Mat4& transform, uint32_t
 		}
 
 		color.a *= _skeleton->a * slot->a * 255;
-		float multiplier = _premultipliedAlpha ? color.a : 255;
+		float multiplier = attachmentVertices->_texture->hasPremultipliedAlpha() ? color.a : 255;
 		color.r *= _skeleton->r * slot->r * multiplier;
 		color.g *= _skeleton->g * slot->g * multiplier;
 		color.b *= _skeleton->b * slot->b * multiplier;
@@ -236,7 +241,7 @@ void SkeletonRenderer::draw (Renderer* renderer, const Mat4& transform, uint32_t
 		BlendFunc blendFunc;
 		switch (slot->data->blendMode) {
 		case SP_BLEND_MODE_ADDITIVE:
-			blendFunc.src = _premultipliedAlpha ? GL_ONE : GL_SRC_ALPHA;
+			blendFunc.src = attachmentVertices->_texture->hasPremultipliedAlpha() ? GL_ONE : GL_SRC_ALPHA;
 			blendFunc.dst = GL_ONE;
 			break;
 		case SP_BLEND_MODE_MULTIPLY:
@@ -248,7 +253,7 @@ void SkeletonRenderer::draw (Renderer* renderer, const Mat4& transform, uint32_t
 			blendFunc.dst = GL_ONE_MINUS_SRC_COLOR;
 			break;
 		default:
-			blendFunc.src = _premultipliedAlpha ? GL_ONE : GL_SRC_ALPHA;
+			blendFunc.src = attachmentVertices->_texture->hasPremultipliedAlpha() ? GL_ONE : GL_SRC_ALPHA;
 			blendFunc.dst = GL_ONE_MINUS_SRC_ALPHA;
 		}
 
