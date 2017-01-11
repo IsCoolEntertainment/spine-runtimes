@@ -44,6 +44,13 @@ AttachmentVertices::AttachmentVertices (Texture2D* texture, int verticesCount, u
 	_triangles->indexCount = trianglesCount;
 }
 
+AttachmentVertices::AttachmentVertices (const AttachmentVertices& that)
+    : AttachmentVertices
+      (that._texture, that._triangles->vertCount, that._triangles->indices,
+       that._triangles->indexCount) {
+    
+}
+    
 AttachmentVertices::~AttachmentVertices () {
 	delete [] _triangles->verts;
 	delete _triangles;

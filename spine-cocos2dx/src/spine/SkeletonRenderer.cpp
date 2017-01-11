@@ -183,7 +183,7 @@ void SkeletonRenderer::draw (Renderer* renderer, const Mat4& transform, uint32_t
 	_skeleton->g = nodeColor.g / (float)255;
 	_skeleton->b = nodeColor.b / (float)255;
 	_skeleton->a = getDisplayedOpacity() / (float)255;
-    
+
     Color4F color;
 	AttachmentVertices* attachmentVertices = nullptr;
 	for (int i = 0, n = _skeleton->slotsCount; i < n; ++i) {

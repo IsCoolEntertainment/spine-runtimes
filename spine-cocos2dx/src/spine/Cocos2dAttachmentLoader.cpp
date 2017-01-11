@@ -43,6 +43,7 @@ spAttachment* _Cocos2dAttachmentLoader_createAttachment (spAttachmentLoader* loa
 	return spAttachmentLoader_createAttachment(SUPER(self->atlasAttachmentLoader), skin, type, name, path);
 }
 
+
 void _Cocos2dAttachmentLoader_configureAttachment (spAttachmentLoader* loader, spAttachment* attachment) {
 	attachment->attachmentLoader = loader;
 
@@ -64,6 +65,41 @@ void _Cocos2dAttachmentLoader_configureAttachment (spAttachmentLoader* loader, s
 		spAtlasRegion* region = (spAtlasRegion*)meshAttachment->rendererObject;
 		AttachmentVertices* attachmentVertices = new AttachmentVertices((Texture2D*)region->page->rendererObject,
 			meshAttachment->super.worldVerticesLength >> 1, meshAttachment->triangles, meshAttachment->trianglesCount);
+		V3F_C4B_T2F* vertices = attachmentVertices->_triangles->verts;
+		for (int i = 0, ii = 0, nn = meshAttachment->super.worldVerticesLength; ii < nn; ++i, ii += 2) {
+			vertices[i].texCoords.u = meshAttachment->uvs[ii];
+			vertices[i].texCoords.v = meshAttachment->uvs[ii + 1];
+		}
+		meshAttachment->rendererObject = attachmentVertices;
+		break;
+	}
+	default: ;
+	}
+}
+
+void _Cocos2dAttachmentLoader_configureClonedAttachment (spAttachmentLoader* loader, spAttachment* attachment) {
+	attachment->attachmentLoader = loader;
+	switch (attachment->type) {
+	case SP_ATTACHMENT_REGION: {
+		spRegionAttachment* regionAttachment = SUB_CAST(spRegionAttachment, attachment);
+		AttachmentVertices* attachmentVertices =
+                    new AttachmentVertices
+                    ( *static_cast< AttachmentVertices* >( regionAttachment->rendererObject ) );
+                
+		V3F_C4B_T2F* vertices = attachmentVertices->_triangles->verts;
+		for (int i = 0, ii = 0; i < 4; ++i, ii += 2) {
+			vertices[i].texCoords.u = regionAttachment->uvs[ii];
+			vertices[i].texCoords.v = regionAttachment->uvs[ii + 1];
+		}
+		regionAttachment->rendererObject = attachmentVertices;
+		break;
+	}
+	case SP_ATTACHMENT_MESH: {
+		spMeshAttachment* meshAttachment = SUB_CAST(spMeshAttachment, attachment);
+		AttachmentVertices* attachmentVertices =
+                    new AttachmentVertices
+                    ( *static_cast< AttachmentVertices* >( meshAttachment->rendererObject ) );
+
 		V3F_C4B_T2F* vertices = attachmentVertices->_triangles->verts;
 		for (int i = 0, ii = 0, nn = meshAttachment->super.worldVerticesLength; ii < nn; ++i, ii += 2) {
 			vertices[i].texCoords.u = meshAttachment->uvs[ii];
@@ -101,7 +137,8 @@ void _Cocos2dAttachmentLoader_dispose (spAttachmentLoader* loader) {
 Cocos2dAttachmentLoader* Cocos2dAttachmentLoader_create (spAtlas* atlas) {
 	Cocos2dAttachmentLoader* self = NEW(Cocos2dAttachmentLoader);
 	_spAttachmentLoader_init(SUPER(self), _Cocos2dAttachmentLoader_dispose, _Cocos2dAttachmentLoader_createAttachment,
-		_Cocos2dAttachmentLoader_configureAttachment, _Cocos2dAttachmentLoader_disposeAttachment);
+		_Cocos2dAttachmentLoader_configureAttachment, _Cocos2dAttachmentLoader_configureClonedAttachment,
+		_Cocos2dAttachmentLoader_disposeAttachment);
 	self->atlasAttachmentLoader = spAtlasAttachmentLoader_create(atlas);
 	return self;
 }

@@ -38,6 +38,7 @@ namespace spine {
 class AttachmentVertices {
 public:
 	AttachmentVertices (cocos2d::Texture2D* texture, int verticesCount, unsigned short* triangles, int trianglesCount);
+	AttachmentVertices (const AttachmentVertices& that );
 	virtual ~AttachmentVertices ();
 
 	cocos2d::Texture2D* _texture;
