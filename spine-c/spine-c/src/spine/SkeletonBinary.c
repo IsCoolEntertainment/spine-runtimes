@@ -45,7 +45,7 @@ typedef struct {
 	const char* skin;
 	int slotIndex;
 	spMeshAttachment* mesh;
-} _spLinkedMesh;
+} _spLinkedMeshBinary;
 
 typedef struct {
 	spSkeletonBinary super;
@@ -53,7 +53,7 @@ typedef struct {
 
 	int linkedMeshCount;
 	int linkedMeshCapacity;
-	_spLinkedMesh* linkedMeshes;
+	_spLinkedMeshBinary* linkedMeshes;
 } _spSkeletonBinary;
 
 spSkeletonBinary* spSkeletonBinary_createWithLoader (spAttachmentLoader* attachmentLoader) {
@@ -203,7 +203,7 @@ static void readColor (_dataInput* input, float *r, float *g, float *b, float *a
 #define PATH_ROTATE_CHAIN 1
 #define PATH_ROTATE_CHAIN_SCALE 2
 
-static void readCurve (_dataInput* input, spCurveTimeline* timeline, int frameIndex) {
+static void readCurveBinary (_dataInput* input, spCurveTimeline* timeline, int frameIndex) {
 	switch (readByte(input)) {
 		case CURVE_STEPPED: {
 			spCurveTimeline_setStepped(timeline, frameIndex);
@@ -222,16 +222,16 @@ static void readCurve (_dataInput* input, spCurveTimeline* timeline, int frameIn
 
 static void _spSkeletonBinary_addLinkedMesh (spSkeletonBinary* self, spMeshAttachment* mesh,
 		const char* skin, int slotIndex, const char* parent) {
-	_spLinkedMesh* linkedMesh;
+	_spLinkedMeshBinary* linkedMesh;
 	_spSkeletonBinary* internal = SUB_CAST(_spSkeletonBinary, self);
 
 	if (internal->linkedMeshCount == internal->linkedMeshCapacity) {
-		_spLinkedMesh* linkedMeshes;
+		_spLinkedMeshBinary* linkedMeshes;
 		internal->linkedMeshCapacity *= 2;
 		if (internal->linkedMeshCapacity < 8) internal->linkedMeshCapacity = 8;
 		/* TODO Why not realloc? */
-		linkedMeshes = MALLOC(_spLinkedMesh, internal->linkedMeshCapacity);
-		memcpy(linkedMeshes, internal->linkedMeshes, sizeof(_spLinkedMesh) * internal->linkedMeshCount);
+		linkedMeshes = MALLOC(_spLinkedMeshBinary, internal->linkedMeshCapacity);
+		memcpy(linkedMeshes, internal->linkedMeshes, sizeof(_spLinkedMeshBinary) * internal->linkedMeshCount);
 		FREE(internal->linkedMeshes);
 		internal->linkedMeshes = linkedMeshes;
 	}
@@ -269,7 +269,7 @@ static spAnimation* _spSkeletonBinary_readAnimation (spSkeletonBinary* self, con
 						float r, g, b, a;
 						readColor(input, &r, &g, &b, &a);
 						spColorTimeline_setFrame(timeline, frameIndex, time, r, g, b, a);
-						if (frameIndex < frameCount - 1) readCurve(input, SUPER(timeline), frameIndex);
+						if (frameIndex < frameCount - 1) readCurveBinary(input, SUPER(timeline), frameIndex);
 					}
 					kv_push(spTimeline*, timelines, SUPER(SUPER(timeline)));
 					duration = MAX(duration, timeline->frames[(frameCount - 1) * COLOR_ENTRIES]);
@@ -315,7 +315,7 @@ static spAnimation* _spSkeletonBinary_readAnimation (spSkeletonBinary* self, con
 						float time = readFloat(input);
 						float degrees = readFloat(input);
 						spRotateTimeline_setFrame(timeline, frameIndex, time, degrees);
-						if (frameIndex < frameCount - 1) readCurve(input, SUPER(timeline), frameIndex);
+						if (frameIndex < frameCount - 1) readCurveBinary(input, SUPER(timeline), frameIndex);
 					}
 					kv_push(spTimeline*, timelines, SUPER(SUPER(timeline)));
 					duration = MAX(duration, timeline->frames[(frameCount - 1) * ROTATE_ENTRIES]);
@@ -346,7 +346,7 @@ static spAnimation* _spSkeletonBinary_readAnimation (spSkeletonBinary* self, con
 						float x = readFloat(input) * timelineScale;
 						float y = readFloat(input) * timelineScale;
 						spTranslateTimeline_setFrame(timeline, frameIndex, time, x, y);
-						if (frameIndex < frameCount - 1) readCurve(input, SUPER(timeline), frameIndex);
+						if (frameIndex < frameCount - 1) readCurveBinary(input, SUPER(timeline), frameIndex);
 					}
 					kv_push(spTimeline*, timelines, SUPER_CAST(spTimeline, timeline));
 					duration = MAX(duration, timeline->frames[(frameCount - 1) * TRANSLATE_ENTRIES]);
@@ -375,7 +375,7 @@ static spAnimation* _spSkeletonBinary_readAnimation (spSkeletonBinary* self, con
 			float mix = readFloat(input);
 			signed char bendDirection = readSByte(input);
 			spIkConstraintTimeline_setFrame(timeline, frameIndex, time, mix, bendDirection);
-			if (frameIndex < frameCount - 1) readCurve(input, SUPER(timeline), frameIndex);
+			if (frameIndex < frameCount - 1) readCurveBinary(input, SUPER(timeline), frameIndex);
 		}
 		kv_push(spTimeline*, timelines, SUPER(SUPER(timeline)));
 		duration = MAX(duration, timeline->frames[(frameCount - 1) * IKCONSTRAINT_ENTRIES]);
@@ -395,7 +395,7 @@ static spAnimation* _spSkeletonBinary_readAnimation (spSkeletonBinary* self, con
 			float shearMix = readFloat(input);
 			spTransformConstraintTimeline_setFrame(timeline, frameIndex, time, rotateMix, translateMix,
 					scaleMix, shearMix);
-			if (frameIndex < frameCount - 1) readCurve(input, SUPER(timeline), frameIndex);
+			if (frameIndex < frameCount - 1) readCurveBinary(input, SUPER(timeline), frameIndex);
 		}
 		kv_push(spTimeline*, timelines, SUPER(SUPER(timeline)));
 		duration = MAX(duration, timeline->frames[(frameCount - 1) * TRANSFORMCONSTRAINT_ENTRIES]);
@@ -427,7 +427,7 @@ static spAnimation* _spSkeletonBinary_readAnimation (spSkeletonBinary* self, con
 						float time = readFloat(input);
 						float value = readFloat(input) * timelineScale;
 						spPathConstraintPositionTimeline_setFrame(timeline, frameIndex, time, value);
-						if (frameIndex < frameCount - 1) readCurve(input, SUPER(timeline), frameIndex);
+						if (frameIndex < frameCount - 1) readCurveBinary(input, SUPER(timeline), frameIndex);
 					}
 					kv_push(spTimeline*, timelines, SUPER(SUPER(timeline)));
 					duration = MAX(duration, timeline->frames[(frameCount - 1) * PATHCONSTRAINTPOSITION_ENTRIES]);
@@ -441,7 +441,7 @@ static spAnimation* _spSkeletonBinary_readAnimation (spSkeletonBinary* self, con
 						float rotateMix = readFloat(input);
 						float translateMix = readFloat(input);
 						spPathConstraintMixTimeline_setFrame(timeline, frameIndex, time, rotateMix, translateMix);
-						if (frameIndex < frameCount - 1) readCurve(input, SUPER(timeline), frameIndex);
+						if (frameIndex < frameCount - 1) readCurveBinary(input, SUPER(timeline), frameIndex);
 					}
 					kv_push(spTimeline*, timelines, SUPER(SUPER(timeline)));
 					duration = MAX(duration, timeline->frames[(frameCount - 1) * PATHCONSTRAINTMIX_ENTRIES]);
@@ -514,7 +514,7 @@ static spAnimation* _spSkeletonBinary_readAnimation (spSkeletonBinary* self, con
 						}
 					}
 					spDeformTimeline_setFrame(timeline, frameIndex, time, deform);
-					if (frameIndex < frameCount - 1) readCurve(input, SUPER(timeline), frameIndex);
+					if (frameIndex < frameCount - 1) readCurveBinary(input, SUPER(timeline), frameIndex);
 				}
 				FREE(tempDeform);
 
@@ -613,7 +613,7 @@ static short* _readShortArray(_dataInput *input, int *length) {
 	return array;
 }
 
-static void _readVertices(spSkeletonBinary* self, _dataInput* input, spVertexAttachment* attachment,
+static void _readVerticesBinary(spSkeletonBinary* self, _dataInput* input, spVertexAttachment* attachment,
 		int vertexCount) {
 	int i, ii;
 	int verticesLength = vertexCount << 1;
@@ -696,7 +696,7 @@ spAttachment* spSkeletonBinary_readAttachment(spSkeletonBinary* self, _dataInput
 			int vertexCount = readVarint(input, 1);
 			spAttachment* attachment = spAttachmentLoader_createAttachment(
 					self->attachmentLoader, skin, type, name, 0);
-			_readVertices(self, input, SUB_CAST(spVertexAttachment, attachment), vertexCount);
+			_readVerticesBinary(self, input, SUB_CAST(spVertexAttachment, attachment), vertexCount);
 			if (nonessential) readInt(input); /* Skip color. */
 			spAttachmentLoader_configureAttachment(self->attachmentLoader, attachment);
 			if (freeName) FREE(name);
@@ -715,7 +715,7 @@ spAttachment* spSkeletonBinary_readAttachment(spSkeletonBinary* self, _dataInput
 			vertexCount = readVarint(input, 1);
 			mesh->regionUVs = _readFloatArray(input, vertexCount << 1, 1);
 			mesh->triangles = (unsigned short*)_readShortArray(input, &mesh->trianglesCount);
-			_readVertices(self, input, SUPER(mesh), vertexCount);
+			_readVerticesBinary(self, input, SUPER(mesh), vertexCount);
 			spMeshAttachment_updateUVs(mesh);
 			mesh->hullLength = readVarint(input, 1) << 1;
 			if (nonessential) {
@@ -761,7 +761,7 @@ spAttachment* spSkeletonBinary_readAttachment(spSkeletonBinary* self, _dataInput
 			path->closed = readBoolean(input);
 			path->constantSpeed = readBoolean(input);
 			vertexCount = readVarint(input, 1);
-			_readVertices(self, input, SUPER(path), vertexCount);
+			_readVerticesBinary(self, input, SUPER(path), vertexCount);
 			path->lengthsLength = vertexCount / 3;
 			path->lengths = MALLOC(float, path->lengthsLength);
 			for (i = 0; i < path->lengthsLength; ++i) {
@@ -991,7 +991,7 @@ spSkeletonData* spSkeletonBinary_readSkeletonData (spSkeletonBinary* self, const
 
 	/* Linked meshes. */
 	for (i = 0; i < internal->linkedMeshCount; ++i) {
-		_spLinkedMesh* linkedMesh = internal->linkedMeshes + i;
+		_spLinkedMeshBinary* linkedMesh = internal->linkedMeshes + i;
 		spSkin* skin = !linkedMesh->skin ? skeletonData->defaultSkin : spSkeletonData_findSkin(skeletonData, linkedMesh->skin);
 		spAttachment* parent;
 		if (!skin) {
@@ -1044,3 +1044,41 @@ spSkeletonData* spSkeletonBinary_readSkeletonData (spSkeletonBinary* self, const
 	FREE(input);
 	return skeletonData;
 }
+
+#undef ATTACHMENT_REGION
+#undef ATTACHMENT_BOUNDING_BOX
+#undef ATTACHMENT_MESH
+#undef ATTACHMENT_LINKED_MESH
+#undef ATTACHMENT_PATH
+
+#undef BLEND_MODE_NORMAL
+#undef BLEND_MODE_ADDITIVE
+#undef BLEND_MODE_MULTIPLY
+#undef BLEND_MODE_SCREEN
+
+#undef CURVE_LINEAR
+#undef CURVE_STEPPED
+#undef CURVE_BEZIER
+
+#undef BONE_ROTATE
+#undef BONE_TRANSLATE
+#undef BONE_SCALE
+#undef BONE_SHEAR
+
+#undef SLOT_ATTACHMENT
+#undef SLOT_COLOR
+
+#undef PATH_POSITION
+#undef PATH_SPACING
+#undef PATH_MIX
+
+#undef PATH_POSITION_FIXED
+#undef PATH_POSITION_PERCENT
+
+#undef PATH_SPACING_LENGTH
+#undef PATH_SPACING_FIXED
+#undef PATH_SPACING_PERCENT
+
+#undef PATH_ROTATE_TANGENT
+#undef PATH_ROTATE_CHAIN
+#undef PATH_ROTATE_CHAIN_SCALE

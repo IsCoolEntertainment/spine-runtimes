@@ -45,7 +45,7 @@ typedef struct {
 	const char* skin;
 	int slotIndex;
 	spMeshAttachment* mesh;
-} _spLinkedMesh;
+} _spLinkedMeshJson;
 
 typedef struct {
 	spSkeletonJson super;
@@ -53,7 +53,7 @@ typedef struct {
 
 	int linkedMeshCount;
 	int linkedMeshCapacity;
-	_spLinkedMesh* linkedMeshes;
+	_spLinkedMeshJson* linkedMeshes;
 } _spSkeletonJson;
 
 spSkeletonJson* spSkeletonJson_createWithLoader (spAttachmentLoader* attachmentLoader) {
@@ -105,7 +105,7 @@ static float toColor (const char* value, int index) {
 	return color / (float)255;
 }
 
-static void readCurve (Json* frame, spCurveTimeline* timeline, int frameIndex) {
+static void readCurveJson (Json* frame, spCurveTimeline* timeline, int frameIndex) {
 	Json* curve = Json_getItem(frame, "curve");
 	if (!curve) return;
 	if (curve->type == Json_String && strcmp(curve->valueString, "stepped") == 0)
@@ -122,15 +122,15 @@ static void readCurve (Json* frame, spCurveTimeline* timeline, int frameIndex) {
 
 static void _spSkeletonJson_addLinkedMesh (spSkeletonJson* self, spMeshAttachment* mesh, const char* skin, int slotIndex,
 		const char* parent) {
-	_spLinkedMesh* linkedMesh;
+	_spLinkedMeshJson* linkedMesh;
 	_spSkeletonJson* internal = SUB_CAST(_spSkeletonJson, self);
 
 	if (internal->linkedMeshCount == internal->linkedMeshCapacity) {
-		_spLinkedMesh* linkedMeshes;
+		_spLinkedMeshJson* linkedMeshes;
 		internal->linkedMeshCapacity *= 2;
 		if (internal->linkedMeshCapacity < 8) internal->linkedMeshCapacity = 8;
-		linkedMeshes = MALLOC(_spLinkedMesh, internal->linkedMeshCapacity);
-		memcpy(linkedMeshes, internal->linkedMeshes, sizeof(_spLinkedMesh) * internal->linkedMeshCount);
+		linkedMeshes = MALLOC(_spLinkedMeshJson, internal->linkedMeshCapacity);
+		memcpy(linkedMeshes, internal->linkedMeshes, sizeof(_spLinkedMeshJson) * internal->linkedMeshCount);
 		FREE(internal->linkedMeshes);
 		internal->linkedMeshes = linkedMeshes;
 	}
@@ -196,7 +196,7 @@ static spAnimation* _spSkeletonJson_readAnimation (spSkeletonJson* self, Json* r
 					const char* s = Json_getString(valueMap, "color", 0);
 					spColorTimeline_setFrame(timeline, frameIndex, Json_getFloat(valueMap, "time", 0), toColor(s, 0), toColor(s, 1), toColor(s, 2),
 							toColor(s, 3));
-					readCurve(valueMap, SUPER(timeline), frameIndex);
+					readCurveJson(valueMap, SUPER(timeline), frameIndex);
 				}
 				animation->timelines[animation->timelinesCount++] = SUPER_CAST(spTimeline, timeline);
 				animation->duration = MAX(animation->duration, timeline->frames[(timelineMap->size - 1) * COLOR_ENTRIES]);
@@ -239,7 +239,7 @@ static spAnimation* _spSkeletonJson_readAnimation (spSkeletonJson* self, Json* r
 
 				for (valueMap = timelineMap->child, frameIndex = 0; valueMap; valueMap = valueMap->next, ++frameIndex) {
 					spRotateTimeline_setFrame(timeline, frameIndex, Json_getFloat(valueMap, "time", 0), Json_getFloat(valueMap, "angle", 0));
-					readCurve(valueMap, SUPER(timeline), frameIndex);
+					readCurveJson(valueMap, SUPER(timeline), frameIndex);
 				}
 				animation->timelines[animation->timelinesCount++] = SUPER_CAST(spTimeline, timeline);
 				animation->duration = MAX(animation->duration, timeline->frames[(timelineMap->size - 1) * ROTATE_ENTRIES]);
@@ -259,7 +259,7 @@ static spAnimation* _spSkeletonJson_readAnimation (spSkeletonJson* self, Json* r
 					for (valueMap = timelineMap->child, frameIndex = 0; valueMap; valueMap = valueMap->next, ++frameIndex) {
 						spTranslateTimeline_setFrame(timeline, frameIndex, Json_getFloat(valueMap, "time", 0), Json_getFloat(valueMap, "x", 0) * timelineScale,
 								Json_getFloat(valueMap, "y", 0) * timelineScale);
-						readCurve(valueMap, SUPER(timeline), frameIndex);
+						readCurveJson(valueMap, SUPER(timeline), frameIndex);
 					}
 					animation->timelines[animation->timelinesCount++] = SUPER_CAST(spTimeline, timeline);
 					animation->duration = MAX(animation->duration, timeline->frames[(timelineMap->size - 1) * TRANSLATE_ENTRIES]);
@@ -286,7 +286,7 @@ static spAnimation* _spSkeletonJson_readAnimation (spSkeletonJson* self, Json* r
 		for (valueMap = constraintMap->child, frameIndex = 0; valueMap; valueMap = valueMap->next, ++frameIndex) {
 			spIkConstraintTimeline_setFrame(timeline, frameIndex, Json_getFloat(valueMap, "time", 0), Json_getFloat(valueMap, "mix", 1),
 					Json_getInt(valueMap, "bendPositive", 1) ? 1 : -1);
-			readCurve(valueMap, SUPER(timeline), frameIndex);
+			readCurveJson(valueMap, SUPER(timeline), frameIndex);
 		}
 		animation->timelines[animation->timelinesCount++] = SUPER_CAST(spTimeline, timeline);
 		animation->duration = MAX(animation->duration, timeline->frames[(constraintMap->size - 1) * IKCONSTRAINT_ENTRIES]);
@@ -305,7 +305,7 @@ static spAnimation* _spSkeletonJson_readAnimation (spSkeletonJson* self, Json* r
 		for (valueMap = constraintMap->child, frameIndex = 0; valueMap; valueMap = valueMap->next, ++frameIndex) {
 			spTransformConstraintTimeline_setFrame(timeline, frameIndex, Json_getFloat(valueMap, "time", 0), Json_getFloat(valueMap, "rotateMix", 1),
 					Json_getFloat(valueMap, "translateMix", 1), Json_getFloat(valueMap, "scaleMix", 1), Json_getFloat(valueMap, "shearMix", 1));
-			readCurve(valueMap, SUPER(timeline), frameIndex);
+			readCurveJson(valueMap, SUPER(timeline), frameIndex);
 		}
 		animation->timelines[animation->timelinesCount++] = SUPER_CAST(spTimeline, timeline);
 		animation->duration = MAX(animation->duration, timeline->frames[(constraintMap->size - 1) * TRANSFORMCONSTRAINT_ENTRIES]);
@@ -344,7 +344,7 @@ static spAnimation* _spSkeletonJson_readAnimation (spSkeletonJson* self, Json* r
 				timeline->pathConstraintIndex = constraintIndex;
 				for (valueMap = timelineMap->child, frameIndex = 0; valueMap; valueMap = valueMap->next, ++frameIndex) {
 					spPathConstraintPositionTimeline_setFrame(timeline, frameIndex, Json_getFloat(valueMap, "time", 0), Json_getFloat(valueMap, timelineName, 0) * timelineScale);
-					readCurve(valueMap, SUPER(timeline), frameIndex);
+					readCurveJson(valueMap, SUPER(timeline), frameIndex);
 				}
 				animation->timelines[animation->timelinesCount++] = SUPER_CAST(spTimeline, timeline);
 				animation->duration = MAX(animation->duration, timeline->frames[(timelineMap->size - 1) * PATHCONSTRAINTPOSITION_ENTRIES]);
@@ -354,7 +354,7 @@ static spAnimation* _spSkeletonJson_readAnimation (spSkeletonJson* self, Json* r
 				for (valueMap = timelineMap->child, frameIndex = 0; valueMap; valueMap = valueMap->next, ++frameIndex) {
 					spPathConstraintMixTimeline_setFrame(timeline, frameIndex, Json_getFloat(valueMap, "time", 0),
 						Json_getFloat(valueMap, "rotateMix", 1), Json_getFloat(valueMap, "translateMix", 1));
-					readCurve(valueMap, SUPER(timeline), frameIndex);
+					readCurveJson(valueMap, SUPER(timeline), frameIndex);
 				}
 				animation->timelines[animation->timelinesCount++] = SUPER_CAST(spTimeline, timeline);
 				animation->duration = MAX(animation->duration, timeline->frames[(timelineMap->size - 1) * PATHCONSTRAINTMIX_ENTRIES]);
@@ -416,7 +416,7 @@ static spAnimation* _spSkeletonJson_readAnimation (spSkeletonJson* self, Json* r
 						}
 					}
 					spDeformTimeline_setFrame(timeline, frameIndex, Json_getFloat(valueMap, "time", 0), deform);
-					readCurve(valueMap, SUPER(timeline), frameIndex);
+					readCurveJson(valueMap, SUPER(timeline), frameIndex);
 				}
 				FREE(tempDeform);
 
@@ -497,7 +497,7 @@ static spAnimation* _spSkeletonJson_readAnimation (spSkeletonJson* self, Json* r
 	return animation;
 }
 
-static void _readVertices (spSkeletonJson* self, Json* attachmentMap, spVertexAttachment* attachment, int verticesLength) {
+static void _readVerticesJson (spSkeletonJson* self, Json* attachmentMap, spVertexAttachment* attachment, int verticesLength) {
 	Json* entry;
 	float* vertices;
 	int i, b, w, nn, entrySize;
@@ -945,7 +945,7 @@ spSkeletonData* spSkeletonJson_readSkeletonData (spSkeletonJson* self, const cha
 							for (entry = entry->child, ii = 0; entry; entry = entry->next, ++ii)
 								mesh->regionUVs[ii] = entry->valueFloat;
 
-							_readVertices(self, attachmentMap, SUPER(mesh), verticesLength);
+							_readVerticesJson(self, attachmentMap, SUPER(mesh), verticesLength);
 
 							spMeshAttachment_updateUVs(mesh);
 
@@ -970,7 +970,7 @@ spSkeletonData* spSkeletonJson_readSkeletonData (spSkeletonJson* self, const cha
 					case SP_ATTACHMENT_BOUNDING_BOX: {
 						spBoundingBoxAttachment* box = SUB_CAST(spBoundingBoxAttachment, attachment);
 						int vertexCount = Json_getInt(attachmentMap, "vertexCount", 0) << 1;
-						_readVertices(self, attachmentMap, SUPER(box), vertexCount);
+						_readVerticesJson(self, attachmentMap, SUPER(box), vertexCount);
 						box->super.verticesCount = vertexCount;
 						spAttachmentLoader_configureAttachment(self->attachmentLoader, attachment);
 						break;
@@ -981,7 +981,7 @@ spSkeletonData* spSkeletonJson_readSkeletonData (spSkeletonJson* self, const cha
 						path->closed = Json_getInt(attachmentMap, "closed", 0);
 						path->constantSpeed = Json_getInt(attachmentMap, "constantSpeed", 1);
 						vertexCount = Json_getInt(attachmentMap, "vertexCount", 0);
-						_readVertices(self, attachmentMap, SUPER(path), vertexCount << 1);
+						_readVerticesJson(self, attachmentMap, SUPER(path), vertexCount << 1);
 
 						path->lengthsLength = vertexCount / 3;
 						path->lengths = MALLOC(float, path->lengthsLength);
@@ -1003,7 +1003,7 @@ spSkeletonData* spSkeletonJson_readSkeletonData (spSkeletonJson* self, const cha
 	/* Linked meshes. */
 	for (i = 0; i < internal->linkedMeshCount; i++) {
 		spAttachment* parent;
-		_spLinkedMesh* linkedMesh = internal->linkedMeshes + i;
+		_spLinkedMeshJson* linkedMesh = internal->linkedMeshes + i;
 		spSkin* skin = !linkedMesh->skin ? skeletonData->defaultSkin : spSkeletonData_findSkin(skeletonData, linkedMesh->skin);
 		if (!skin) {
 			spSkeletonData_dispose(skeletonData);

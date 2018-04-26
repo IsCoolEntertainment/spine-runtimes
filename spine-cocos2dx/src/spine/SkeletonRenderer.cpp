@@ -35,10 +35,6 @@
 #include <spine/Cocos2dAttachmentLoader.h>
 #include <algorithm>
 
-USING_NS_CC;
-using std::min;
-using std::max;
-
 namespace spine {
 
 SkeletonRenderer* SkeletonRenderer::createWithData (spSkeletonData* skeletonData, bool ownsSkeletonData) {
@@ -63,14 +59,14 @@ void SkeletonRenderer::initialize () {
 	_worldVertices = new float[1000]; // Max number of vertices per mesh.
 
 #if CC_ENABLE_PREMULTIPLIED_ALPHA == 0
-	_blendFunc = BlendFunc::ALPHA_NON_PREMULTIPLIED;
+	_blendFunc = cocos2d::BlendFunc::ALPHA_NON_PREMULTIPLIED;
 	setOpacityModifyRGB(false);
 #else
-	_blendFunc = BlendFunc::ALPHA_PREMULTIPLIED;
+	_blendFunc = cocos2d::BlendFunc::ALPHA_PREMULTIPLIED;
 	setOpacityModifyRGB(true);
 #endif
         
-	setGLProgramState(GLProgramState::getOrCreateWithGLProgramName(GLProgram::SHADER_NAME_POSITION_TEXTURE_COLOR_NO_MVP));
+	setGLProgramState(cocos2d::GLProgramState::getOrCreateWithGLProgramName(cocos2d::GLProgram::SHADER_NAME_POSITION_TEXTURE_COLOR_NO_MVP));
 }
 
 void SkeletonRenderer::setSkeletonData (spSkeletonData *skeletonData, bool ownsSkeletonData) {
@@ -180,16 +176,16 @@ void SkeletonRenderer::update (float deltaTime) {
 	spSkeleton_update(_skeleton, deltaTime * _timeScale);
 }
 
-void SkeletonRenderer::draw (Renderer* renderer, const Mat4& transform, uint32_t transformFlags) {
+void SkeletonRenderer::draw (cocos2d::Renderer* renderer, const cocos2d::Mat4& transform, uint32_t transformFlags) {
 	SkeletonBatch* batch = SkeletonBatch::getInstance();
 
-	Color3B nodeColor = getColor();
+	cocos2d::Color3B nodeColor = getColor();
 	_skeleton->r = nodeColor.r / (float)255;
 	_skeleton->g = nodeColor.g / (float)255;
 	_skeleton->b = nodeColor.b / (float)255;
 	_skeleton->a = getDisplayedOpacity() / (float)255;
 
-    Color4F color;
+        cocos2d::Color4F color;
 	AttachmentVertices* attachmentVertices = nullptr;
 	for (int i = 0, n = _skeleton->slotsCount; i < n; ++i) {
 		spSlot* slot = _skeleton->drawOrder[i];
@@ -229,7 +225,7 @@ void SkeletonRenderer::draw (Renderer* renderer, const Mat4& transform, uint32_t
         
         
 		for (int v = 0, w = 0, vn = attachmentVertices->_triangles->vertCount; v < vn; ++v, w += 2) {
-			V3F_C4B_T2F* vertex = attachmentVertices->_triangles->verts + v;
+			cocos2d::V3F_C4B_T2F* vertex = attachmentVertices->_triangles->verts + v;
 			vertex->vertices.x = _worldVertices[w];
 			vertex->vertices.y = _worldVertices[w + 1];
             vertex->colors.r = (GLubyte)color.r;
@@ -238,7 +234,7 @@ void SkeletonRenderer::draw (Renderer* renderer, const Mat4& transform, uint32_t
             vertex->colors.a = (GLubyte)color.a;
 		}
 
-		BlendFunc blendFunc;
+		cocos2d::BlendFunc blendFunc;
 		switch (slot->data->blendMode) {
 		case SP_BLEND_MODE_ADDITIVE:
 			blendFunc.src = attachmentVertices->_texture->hasPremultipliedAlpha() ? GL_ONE : GL_SRC_ALPHA;
@@ -266,30 +262,30 @@ void SkeletonRenderer::draw (Renderer* renderer, const Mat4& transform, uint32_t
 	}
 }
 
-void SkeletonRenderer::drawDebug (Renderer* renderer, const Mat4 &transform, uint32_t transformFlags) {
+void SkeletonRenderer::drawDebug (cocos2d::Renderer* renderer, const cocos2d::Mat4 &transform, uint32_t transformFlags) {
 
-    Director* director = Director::getInstance();
-    director->pushMatrix(MATRIX_STACK_TYPE::MATRIX_STACK_MODELVIEW);
-    director->loadMatrix(MATRIX_STACK_TYPE::MATRIX_STACK_MODELVIEW, transform);
+    cocos2d::Director* director = cocos2d::Director::getInstance();
+    director->pushMatrix(cocos2d::MATRIX_STACK_TYPE::MATRIX_STACK_MODELVIEW);
+    director->loadMatrix(cocos2d::MATRIX_STACK_TYPE::MATRIX_STACK_MODELVIEW, transform);
     
-    DrawNode* drawNode = DrawNode::create();
+    cocos2d::DrawNode* drawNode = cocos2d::DrawNode::create();
     
     if (_debugSlots) {
         // Slots.
         // DrawPrimitives::setDrawColor4B(0, 0, 255, 255);
         glLineWidth(1);
-        Vec2 points[4];
-        V3F_C4B_T2F_Quad quad;
+        cocos2d::Vec2 points[4];
+        cocos2d::V3F_C4B_T2F_Quad quad;
         for (int i = 0, n = _skeleton->slotsCount; i < n; i++) {
             spSlot* slot = _skeleton->drawOrder[i];
             if (!slot->attachment || slot->attachment->type != SP_ATTACHMENT_REGION) continue;
             spRegionAttachment* attachment = (spRegionAttachment*)slot->attachment;
             spRegionAttachment_computeWorldVertices(attachment, slot->bone, _worldVertices);
-            points[0] = Vec2(_worldVertices[0], _worldVertices[1]);
-            points[1] = Vec2(_worldVertices[2], _worldVertices[3]);
-            points[2] = Vec2(_worldVertices[4], _worldVertices[5]);
-            points[3] = Vec2(_worldVertices[6], _worldVertices[7]);
-            drawNode->drawPoly(points, 4, true, Color4F::BLUE);
+            points[0] = cocos2d::Vec2(_worldVertices[0], _worldVertices[1]);
+            points[1] = cocos2d::Vec2(_worldVertices[2], _worldVertices[3]);
+            points[2] = cocos2d::Vec2(_worldVertices[4], _worldVertices[5]);
+            points[3] = cocos2d::Vec2(_worldVertices[6], _worldVertices[7]);
+            drawNode->drawPoly(points, 4, true, cocos2d::Color4F::BLUE);
         }
     }
     if (_debugBones) {
@@ -299,19 +295,19 @@ void SkeletonRenderer::drawDebug (Renderer* renderer, const Mat4 &transform, uin
             spBone *bone = _skeleton->bones[i];
             float x = bone->data->length * bone->a + bone->worldX;
             float y = bone->data->length * bone->c + bone->worldY;
-            drawNode->drawLine(Vec2(bone->worldX, bone->worldY), Vec2(x, y), Color4F::RED);
+            drawNode->drawLine(cocos2d::Vec2(bone->worldX, bone->worldY), cocos2d::Vec2(x, y), cocos2d::Color4F::RED);
         }
         // Bone origins.
-        auto color = Color4F::BLUE; // Root bone is blue.
+        auto color = cocos2d::Color4F::BLUE; // Root bone is blue.
         for (int i = 0, n = _skeleton->bonesCount; i < n; i++) {
             spBone *bone = _skeleton->bones[i];
-            drawNode->drawPoint(Vec2(bone->worldX, bone->worldY), 4, color);
-            if (i == 0) color = Color4F::GREEN;
+            drawNode->drawPoint(cocos2d::Vec2(bone->worldX, bone->worldY), 4, color);
+            if (i == 0) color = cocos2d::Color4F::GREEN;
         }
     }
     
     drawNode->draw(renderer, transform, transformFlags);
-    director->popMatrix(MATRIX_STACK_TYPE::MATRIX_STACK_MODELVIEW);
+    director->popMatrix(cocos2d::MATRIX_STACK_TYPE::MATRIX_STACK_MODELVIEW);
 }
 
 AttachmentVertices* SkeletonRenderer::getAttachmentVertices (spRegionAttachment* attachment) const {
@@ -322,7 +318,7 @@ AttachmentVertices* SkeletonRenderer::getAttachmentVertices (spMeshAttachment* a
 	return (AttachmentVertices*)attachment->rendererObject;
 }
 
-Rect SkeletonRenderer::getBoundingBox () const {
+cocos2d::Rect SkeletonRenderer::getBoundingBox () const {
 	float minX = FLT_MAX, minY = FLT_MAX, maxX = -FLT_MAX, maxY = -FLT_MAX;
 	float scaleX = getScaleX(), scaleY = getScaleY();
 	for (int i = 0; i < _skeleton->slotsCount; ++i) {
@@ -341,15 +337,15 @@ Rect SkeletonRenderer::getBoundingBox () const {
 			continue;
 		for (int ii = 0; ii < verticesCount; ii += 2) {
 			float x = _worldVertices[ii] * scaleX, y = _worldVertices[ii + 1] * scaleY;
-			minX = min(minX, x);
-			minY = min(minY, y);
-			maxX = max(maxX, x);
-			maxY = max(maxY, y);
+			minX = std::min(minX, x);
+			minY = std::min(minY, y);
+			maxX = std::max(maxX, x);
+			maxY = std::max(maxY, y);
 		}
 	}
-	Vec2 position = getPosition();
+	cocos2d::Vec2 position = getPosition();
     if (minX == FLT_MAX) minX = minY = maxX = maxY = 0;    
-	return Rect(position.x + minX, position.y + minY, maxX - minX, maxY - minY);
+	return cocos2d::Rect(position.x + minX, position.y + minY, maxX - minX, maxY - minY);
 }
 
 // --- Convenience methods for Skeleton_* functions.
@@ -420,27 +416,27 @@ bool SkeletonRenderer::getDebugBonesEnabled () const {
 
 void SkeletonRenderer::onEnter () {
 #if CC_ENABLE_SCRIPT_BINDING
-	if (_scriptType == kScriptTypeJavascript && ScriptEngineManager::sendNodeEventToJSExtended(this, kNodeOnEnter)) return;
+	if (_scriptType == cocos2d::kScriptTypeJavascript && cocos2d::ScriptEngineManager::sendNodeEventToJSExtended(this, cocos2d::kNodeOnEnter)) return;
 #endif
-	Node::onEnter();
+	cocos2d::Node::onEnter();
 	scheduleUpdate();
 }
 
 void SkeletonRenderer::onExit () {
 #if CC_ENABLE_SCRIPT_BINDING
-	if (_scriptType == kScriptTypeJavascript && ScriptEngineManager::sendNodeEventToJSExtended(this, kNodeOnExit)) return;
+	if (_scriptType == cocos2d::kScriptTypeJavascript && cocos2d::ScriptEngineManager::sendNodeEventToJSExtended(this, cocos2d::kNodeOnExit)) return;
 #endif
-	Node::onExit();
+	cocos2d::Node::onExit();
 	unscheduleUpdate();
 }
 
 // --- CCBlendProtocol
 
-const BlendFunc& SkeletonRenderer::getBlendFunc () const {
+const cocos2d::BlendFunc& SkeletonRenderer::getBlendFunc () const {
 	return _blendFunc;
 }
 
-void SkeletonRenderer::setBlendFunc (const BlendFunc &blendFunc) {
+void SkeletonRenderer::setBlendFunc (const cocos2d::BlendFunc &blendFunc) {
 	_blendFunc = blendFunc;
 }
 
