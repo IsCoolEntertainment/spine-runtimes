@@ -253,7 +253,7 @@ void SkeletonRenderer::draw (cocos2d::Renderer* renderer, const cocos2d::Mat4& t
 			blendFunc.dst = GL_ONE_MINUS_SRC_ALPHA;
 		}
 
-		batch->addCommand(renderer, _globalZOrder, attachmentVertices->_texture->getName(), _glProgramState, blendFunc,
+		batch->addCommand(renderer, _displayedGlobalZOrder, attachmentVertices->_texture->getName(), _glProgramState, blendFunc,
 			*attachmentVertices->_triangles, transform, transformFlags);
 	}
 
